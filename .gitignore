@@ -14,7 +14,7 @@ ai-stack/data/
 # ========================
 # Database (PostgreSQL 預留)
 # ========================
-# database/data/  # 未來 PostgreSQL 資料目錄
+database/postgresql/data/  # 未來 PostgreSQL 資料目錄
 
 # ========================
 # 通用忽略
@@ -23,3 +23,5 @@ ai-stack/data/
 .history/
 *.log
 *.tmp
+
+.env
