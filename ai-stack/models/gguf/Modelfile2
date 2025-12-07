@@ -1,0 +1,80 @@
+# 1. 引用您下載的 GGUF 模型檔案 (請確認路徑是否需調整，例如 /usr/share/ollama/.ollama/models/...)
+FROM /models/Qwen3-Coder-30B-A3B-Instruct-UD-Q3_K_XL.gguf
+
+# 2. 系統資源與上下文長度
+# Unsloth 建議：雖然原生支援 256k，但為避免 OOM (記憶體不足)，建議設為 32k (32768)
+PARAMETER num_ctx 32768
+# PARAMETER num_gpu 99
+
+# 3. 官方推薦推論參數 (Best Practices)
+# 針對 Qwen3-Coder 的最佳化設定
+PARAMETER temperature 0.7
+PARAMETER top_p 0.8
+PARAMETER top_k 20
+PARAMETER repeat_penalty 1.05
+PARAMETER min_p 0.0
+
+# 4. 停止詞 (標準 ChatML)
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+
+# 5. Template (Qwen3 Agentic ChatML)
+# 支援一般對話與 Function Calling
+TEMPLATE """{{- if .Messages }}
+{{- if or .System .Tools }}<|im_start|>system
+{{- if .System }}
+{{ .System }}
+{{- end }}
+{{- if .Tools }}
+
+# Tools
+
+You have access to the following functions:
+
+<tools>
+{{- range .Tools }}
+{"type": "function", "function": {{ .Function }}}
+{{- end }}
+</tools>
+
+If you choose to call a function ONLY reply in the following format with NO suffix:
+
+<tool_call>
+<function=function_name>
+<parameter=param_name>
+value
+</parameter>
+</function>
+</tool_call>
+{{- end }}<|im_end|>
+{{ end }}
+{{- range $i, $_ := .Messages }}
+{{- $last := eq (len (slice $.Messages $i)) 1 -}}
+{{- if eq .Role "user" }}<|im_start|>user
+{{ .Content }}<|im_end|>
+{{ else if eq .Role "assistant" }}<|im_start|>assistant
+{{ if .Content }}{{ .Content }}
+{{- else if .ToolCalls }}<tool_call>
+{{ range .ToolCalls }}<function={{ .Function.Name }}>
+{{ range $k, $v := .Function.Arguments }}<parameter={{ $k }}>
+{{ $v }}
+</parameter>
+{{ end }}</function>
+{{ end }}</tool_call>
+{{- end }}{{ if not $last }}<|im_end|>
+{{ end }}
+{{- else if eq .Role "tool" }}<|im_start|>user
+<tool_response>
+{{ .Content }}
+</tool_response><|im_end|>
+{{ end }}
+{{- if and (ne .Role "assistant") $last }}<|im_start|>assistant
+{{ end }}
+{{- end }}
+{{- else }}
+{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ end }}{{ .Response }}{{ if .Response }}<|im_end|>{{ end }}"""
