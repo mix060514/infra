@@ -1,0 +1,37 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    tty: true
+    ports:
+      - "11434:11434"
+    volumes:
+      # 1. 內部資料庫
+      - ./data/ollama:/root/.ollama
+      
+      # 2. 模型暫存區
+      - ./models/gguf:/models
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=24h  # (選用) 讓模型載入後保持 24 小時不卸載，反應更快
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # 3. WebUI 資料
+      - ./data/open-webui:/app/backend/data
