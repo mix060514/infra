@@ -12,9 +12,15 @@ ai-stack/data/
 .cache/
 
 # ========================
-# Database (PostgreSQL 預留)
+# Database (PostgreSQL)
 # ========================
-database/postgresql/data/  # 未來 PostgreSQL 資料目錄
+database/postgresql/data/
+
+# ========================
+# MLflow
+# ========================
+mlflow/artifacts/*
+!mlflow/artifacts/.gitkeep
 
 # ========================
 # 通用忽略
