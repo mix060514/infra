@@ -1,12 +1,14 @@
 services:
   mlflow:
     container_name: infra-mlflow
-    image: ghcr.io/mlflow/mlflow:v2.19.0
+    build: .
     restart: always
     env_file:
       - .env
     ports:
       - "${MLFLOW_PORT:-5000}:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./artifacts:/mlflow/artifacts
     command: >
@@ -15,6 +17,8 @@ services:
       --port 5000
       --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${MLFLOW_DB}
       --default-artifact-root /mlflow/artifacts
+      --allowed-hosts 0.0.0.0,192.168.1.102,192.168.1.102:5000,localhost
+      --cors-allowed-origins '*'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
