@@ -15,6 +15,7 @@ ai-stack/data/
 # Database (PostgreSQL)
 # ========================
 database/postgresql/data/
+database/postgresql/certs/
 
 # ========================
 # MLflow
