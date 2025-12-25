@@ -30,12 +30,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_ENABLE_TLS: "True"
     ports:
-      - "5050:443"
-    volumes:
-      - ./certs/server.cert:/certs/server.cert:ro
-      - ./certs/server.key:/certs/server.key:ro
+      - "5050:80"
     depends_on:
       postgres:
         condition: service_healthy
