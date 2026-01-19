@@ -24,6 +24,39 @@ services:
               count: 1
               capabilities: [gpu]
 
+  sglang:
+    image: lmsysorg/sglang:latest
+    container_name: sglang
+    restart: always
+    ports:
+      - "30000:30000"
+    volumes:
+      - ./models/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    command: >
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-14B-AWQ
+      --host 0.0.0.0
+      --port 30000
+      --context-length 16384
+      --mem-fraction-static 0.65
+      --quantization awq_marlin
+      --enable-torch-compile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:30000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
