@@ -1,7 +1,10 @@
 services:
   postgres:
     container_name: infra-postgres
-    image: postgres:${POSTGRES_VERSION:-17-alpine}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: postgres:${POSTGRES_VERSION:-17-alpine}
     restart: always
     env_file:
       - .env
