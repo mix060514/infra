@@ -24,31 +24,25 @@ services:
               count: 1
               capabilities: [gpu]
 
-  sglang:
-    image: lmsysorg/sglang:latest
-    container_name: sglang
+  llama-cpp:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-cpp
     restart: always
     ports:
-      - "30000:30000"
+      - "8081:8080"
     volumes:
-      - ./models/.cache/huggingface:/root/.cache/huggingface
+      - ./models/gguf:/models
     environment:
-      - HF_TOKEN=${HF_TOKEN}
-    command: >
-      python3 -m sglang.launch_server
-      --model-path Qwen/Qwen3-14B-AWQ
-      --host 0.0.0.0
-      --port 30000
-      --context-length 16384
-      --mem-fraction-static 0.65
-      --quantization awq_marlin
-      --enable-torch-compile
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:30000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      - LLAMA_ARG_MODEL=/models/Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf
+      # - LLAMA_ARG_MODEL=/models/Qwen3-14B-Q4_K_M.gguf
+      - LLAMA_ARG_CTX_SIZE=32768
+      # - LLAMA_ARG_CTX_SIZE=262144
+      - LLAMA_ARG_N_GPU_LAYERS=99
+      # Qwen3 recommended sampling parameters
+      - LLAMA_ARG_TEMP=0.7
+      - LLAMA_ARG_TOP_P=0.8
+      - LLAMA_ARG_TOP_K=20
+      - LLAMA_ARG_MIN_P=0
     deploy:
       resources:
         reservations:
@@ -56,6 +50,60 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+  llama-cpp-vl:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-cpp-vl
+    restart: always
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./models/gguf:/models
+    environment:
+      - LLAMA_ARG_MODEL=/models/Qwen3VL-4B-Instruct-Q4_K_M.gguf
+      - LLAMA_ARG_MMPROJ=/models/mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf
+      - LLAMA_ARG_CTX_SIZE=32768
+      - LLAMA_ARG_N_GPU_LAYERS=99
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+#  sglang:
+#    image: lmsysorg/sglang:latest
+#    container_name: sglang
+#    restart: always
+#    ports:
+#      - "30000:30000"
+#    volumes:
+#      - ./models/.cache/huggingface:/root/.cache/huggingface
+#    environment:
+#      - HF_TOKEN=${HF_TOKEN}
+#    command: >
+#      python3 -m sglang.launch_server
+#      --model-path Qwen/Qwen3-14B-AWQ
+#      --host 0.0.0.0
+#      --port 30000
+#      --context-length 16384
+#      --mem-fraction-static 0.65
+#      --quantization awq_marlin
+#      --enable-torch-compile
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -f http://localhost:30000/health || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 60s
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [gpu]
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
